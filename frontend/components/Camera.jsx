@@ -1,5 +1,5 @@
-"use client"
-import React, { useRef, useEffect, useState } from 'react';
+"use client";
+import React, { useRef, useEffect, useState } from "react";
 
 const CameraComponent = () => {
   const videoRef = useRef(null);
@@ -7,12 +7,24 @@ const CameraComponent = () => {
   const streamRef = useRef(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Function to detect if the device is mobile
+  const isMobileDevice = () => {
+    return /Mobi|Android/i.test(navigator.userAgent);
+  };
+
   useEffect(() => {
     // Function to start the camera
     const startCamera = async () => {
       try {
+        // Decide which camera to use based on device type
+        const constraints = {
+          video: {
+            facingMode: isMobileDevice() ? { exact: "environment" } : "user",
+          },
+        };
+
         // Request access to the camera
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         streamRef.current = stream;
 
         // Set the video source to the stream
@@ -20,7 +32,7 @@ const CameraComponent = () => {
           videoRef.current.srcObject = stream;
         }
       } catch (error) {
-        console.error('Error accessing the camera:', error);
+        console.error("Error accessing the camera:", error);
       }
     };
 
@@ -39,7 +51,7 @@ const CameraComponent = () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
 
       if (context) {
         // Set canvas dimensions to match the video
@@ -50,10 +62,10 @@ const CameraComponent = () => {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         // Get the image data URL
-        const imageDataURL = canvas.toDataURL('image/png');
+        const imageDataURL = canvas.toDataURL("image/png");
 
         // Now you can send 'imageDataURL' to your backend or process it in-browser
-        console.log('Captured frame:', imageDataURL);
+        console.log("Captured frame:", imageDataURL);
         // Example: processImage(imageDataURL);
       }
     }
@@ -74,10 +86,10 @@ const CameraComponent = () => {
         ref={videoRef}
         autoPlay
         playsInline
-        style={{ width: '100%', height: 'auto' }}
+        style={{ width: "100%", height: "auto" }}
       />
       {/* Hidden canvas element for capturing frames */}
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      <canvas ref={canvasRef} style={{ display: "none" }} />
       {isProcessing && <p>Processing...</p>}
     </div>
   );
