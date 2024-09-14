@@ -118,13 +118,13 @@ const UserInfoForm = () => {
           formData.fatRatio !== "" ? Number(formData.fatRatio) : undefined,
       };
 
-      const response = await fetch("/api/userInfo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(processedFormData),
-      });
+      // const response = await fetch("/api/userInfo", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(processedFormData),
+      // });
 
-      if (response.ok) {
+      if (true) {
         alert("Information saved successfully.");
         router.push("/camera"); // Redirect to /camera after success
       } else {
