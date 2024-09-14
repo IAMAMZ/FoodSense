@@ -12,8 +12,6 @@ from flask_cors import CORS
 import json
 import re
 
-# OpenAI API Key
-# Replace with your OpenAI API key
 
 app = Flask(__name__)
 CORS(app)
