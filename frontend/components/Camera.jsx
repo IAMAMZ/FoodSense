@@ -1,84 +1,65 @@
-"use client"
-import React, { useRef, useEffect, useState } from 'react';
+"use client";
+
+import React, { useRef, useEffect } from 'react';
+import io from 'socket.io-client';
 
 const CameraComponent = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const streamRef = useRef(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const socket = useRef(null);
 
   useEffect(() => {
-    // Function to start the camera
+    console.log('Connecting to the server...');
+    
+    // Force the use of WebSocket as the transport mechanism
+    socket.current = io('http://localhost:5000', {
+      transports: ['websocket'],  // Use WebSocket transport explicitly
+    });
+
+    socket.current.on('connect', () => {
+      console.log('Connected to WebSocket server');
+    });
+
+    socket.current.on('disconnect', (reason) => {
+      console.log(`Disconnected from WebSocket server: ${reason}`);
+    });
+
     const startCamera = async () => {
       try {
-        // Request access to the camera
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        streamRef.current = stream;
-
-        // Set the video source to the stream
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
+        videoRef.current.srcObject = stream;
       } catch (error) {
         console.error('Error accessing the camera:', error);
       }
     };
-
     startCamera();
 
-    // Cleanup function to stop the camera when the component unmounts
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, []);
+    const captureFrame = () => {
+      if (videoRef.current && canvasRef.current) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
 
-  // Function to capture a frame from the video
-  const captureFrame = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-
-      if (context) {
-        // Set canvas dimensions to match the video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
-        // Draw the current frame from the video onto the canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Get the image data URL
-        const imageDataURL = canvas.toDataURL('image/png');
-
-        // Now you can send 'imageDataURL' to your backend or process it in-browser
-        console.log('Captured frame:', imageDataURL);
-        // Example: processImage(imageDataURL);
+        const imageDataURL = canvas.toDataURL('image/jpeg');
+        const base64Image = imageDataURL.split(',')[1];  // Extract base64 data only
+        // console.log('Sending frame to server');
+        socket.current.emit('video_frame', base64Image);  // Send base64 string
       }
-    }
-  };
+    };
 
-  // Use an interval to capture frames periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      captureFrame();
-    }, 1000); // Capture a frame every 1 second
-
+    const interval = setInterval(captureFrame, 100);  // Capture frame every 100ms
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div>
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        style={{ width: '100%', height: 'auto' }}
-      />
-      {/* Hidden canvas element for capturing frames */}
+      <video ref={videoRef} autoPlay playsInline style={{ width: '100%' }} />
       <canvas ref={canvasRef} style={{ display: 'none' }} />
-      {isProcessing && <p>Processing...</p>}
     </div>
   );
 };
