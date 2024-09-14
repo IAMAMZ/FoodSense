@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import CameraComponent from "@/components/Camera";
 import ImageFeedback from "@/components/ImageFeedback";
-import io from "socket.io-client"; // Import socket.io-client
+import io from "socket.io-client";
+import baseurl from "@/baseurl";
 
 let socket;
 
@@ -19,8 +20,7 @@ export default function Page() {
   // Effect to set up the WebSocket connection and listen for updates
   useEffect(() => {
     // Initialize the WebSocket connection
-    socket = io("http://localhost:3000"); // Replace with your WebSocket server URL
-
+    socket = io(baseurl);
     // Listen for 'nutrition-update' event from the server
     socket.on("nutrition-update", (data) => {
       setNutritionData(data);
