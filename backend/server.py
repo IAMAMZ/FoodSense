@@ -14,7 +14,7 @@ import re
 
 # OpenAI API Key
 # Replace with your OpenAI API key
-openai.api_key = "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"
+openai.api_key = ""
 
 app = Flask(__name__)
 CORS(app)
