@@ -71,7 +71,6 @@ const CameraComponent = () => {
       }
     }
   };
-
   // Use an interval to capture frames periodically
   useEffect(() => {
     const interval = setInterval(() => {
