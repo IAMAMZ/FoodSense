@@ -1,3 +1,4 @@
+// CameraComponent.js
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 
@@ -81,12 +82,12 @@ const CameraComponent = () => {
   }, []);
 
   return (
-    <div>
+    <div className="relative w-full h-screen">
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        style={{ width: "100%", height: "auto" }}
+        className="w-full h-3/4 object-cover" // Takes 3/4 of screen height in mobile view
       />
       {/* Hidden canvas element for capturing frames */}
       <canvas ref={canvasRef} style={{ display: "none" }} />
