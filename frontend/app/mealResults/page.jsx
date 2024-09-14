@@ -1,5 +1,5 @@
-"use client"; 
-import { useSearchParams, useRouter } from 'next/navigation'; // Use next/navigation
+"use client";
+import { useSearchParams, useRouter } from 'next/navigation';
 import { MdCancel } from 'react-icons/md';
 import Image from 'next/image';
 
@@ -16,12 +16,12 @@ export default function Page() {
   return (
     <div className="flex flex-col justify-start items-center min-h-screen relative w-full">
       {/* Cancel Button */}
-      <div className="absolute top-4 left-4 cursor-pointer" onClick={() => router.back()}>
+      <div className="absolute top-3 left-3 cursor-pointer" onClick={() => router.back()}>
         <MdCancel size={32} />
       </div>
 
       {/* Logo */}
-      <div className="my-8">
+      <div className="mt-16 mb-10"> {/* Added more top margin */}
         <Image
           src="/media/Logo_1.png"
           alt="food"
@@ -32,28 +32,29 @@ export default function Page() {
       </div>
 
       {/* Macros Section */}
-      <div className="bg-green-100 rounded-lg py-4 mb-8 w-full max-w-sm">
+      <div className="bg-[#FAFFEF] rounded-lg py-4 mb-8 w-full max-w-sm">
         <div className="flex items-center justify-between p-3">
           <div className="flex flex-col items-center">
-            <span className="font-semibold text-lg">Protein</span>
-            <span className='text-lg'>{protein}g</span>
+            <span className="font-semibold text-2xl">Protein</span>
+            <span className='text-2xl'>{protein}g</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="font-semibold text-lg">Calories</span>
-            <span className="text-lg">{calories}</span>
+            <span className="font-semibold text-2xl">Calories</span>
+            <span className="text-2xl">{calories}</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="font-semibold text-lg">Carbs</span>
-            <span className='text-lg'>{carbs}g</span>
+            <span className="font-semibold text-2xl">Carbs</span>
+            <span className='text-2xl'>{carbs}g</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="font-semibold text-lg">Fat</span>
-            <span className='text-lg'>{fat}g</span>
+            <span className="font-semibold text-2xl">Fat</span>
+            <span className='text-2xl'>{fat}g</span>
           </div>
         </div>
       </div>
-       {/* Coaching Advice Section */}
-       <div className="text-center mb-8">
+
+      {/* Coaching Advice Section */}
+      <div className="text-center mb-8">
         <h2 className="font-semibold mb-2">Coaching Advice</h2>
         <p>
           Advice ..
@@ -73,11 +74,11 @@ export default function Page() {
       </div>
 
       {/* Buttons */}
-      <div className="flex space-x-4">
-        <button className="bg-green-500 text-white py-2 px-4 rounded-full">
+      <div className="flex flex-col gap-10  w-full p-2">
+        <button className="bg-[#BBF246;] w-[60%] text-black text-lg py-2 px-4 rounded-full max-w-sm mx-auto">
           View Saved Meals
         </button>
-        <button className="bg-black text-white py-2 px-4 rounded-full">
+        <button className="bg-black text-white w-[60%] text-lg py-2 px-4 rounded-full max-w-sm mx-auto">
           Scan Another Meal
         </button>
       </div>

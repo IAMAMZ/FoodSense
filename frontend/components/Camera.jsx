@@ -1,11 +1,13 @@
 // CameraComponent.js
 "use client";
 import React, { useRef, useEffect, useState } from "react";
+import io from 'socket.io-client';  // Make sure to import socket.io-client
 
 const CameraComponent = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const socket = useRef(null);  // Added socket reference
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Function to detect if the device is mobile
@@ -14,18 +16,25 @@ const CameraComponent = () => {
   };
 
   useEffect(() => {
-    // Function to start the camera
+    console.log('Connecting to the server...');
+    
+    // Force the use of WebSocket as the transport mechanism
+    socket.current = io('http://localhost:5000', {
+      transports: ['websocket'],  // Use WebSocket transport explicitly
+    });
+
+    socket.current.on('connect', () => {
+      console.log('Connected to WebSocket server');
+    });
+
+    socket.current.on('disconnect', (reason) => {
+      console.log(`Disconnected from WebSocket server: ${reason}`);
+    });
+
     const startCamera = async () => {
       try {
-        // Decide which camera to use based on device type
-        const constraints = {
-          video: {
-            facingMode: isMobileDevice() ? { exact: "environment" } : "user",
-          },
-        };
-
         // Request access to the camera
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         streamRef.current = stream;
 
         // Set the video source to the stream
@@ -36,13 +45,15 @@ const CameraComponent = () => {
         console.error("Error accessing the camera:", error);
       }
     };
-
     startCamera();
 
     // Cleanup function to stop the camera when the component unmounts
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (socket.current) {
+        socket.current.disconnect();  // Disconnect socket on cleanup
       }
     };
   }, []);
@@ -52,25 +63,22 @@ const CameraComponent = () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      const context = canvas.getContext("2d");
+      const context = canvas.getContext('2d');
 
-      if (context) {
-        // Set canvas dimensions to match the video
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-        // Draw the current frame from the video onto the canvas
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Get the image data URL
-        const imageDataURL = canvas.toDataURL("image/png");
+      // Get the image data URL
+      const imageDataURL = canvas.toDataURL('image/png');
 
-        // Now you can send 'imageDataURL' to your backend or process it in-browser
-        console.log("Captured frame:", imageDataURL);
-        // Example: processImage(imageDataURL);
-      }
+      // Now you can send 'imageDataURL' to your backend or process it in-browser
+      console.log('Captured frame:', imageDataURL);
+      // Example: processImage(imageDataURL);
     }
   };
+
   // Use an interval to capture frames periodically
   useEffect(() => {
     const interval = setInterval(() => {
@@ -81,15 +89,15 @@ const CameraComponent = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-screen">
+    <div>
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        className="w-full h-3/4 object-cover" // Takes 3/4 of screen height in mobile view
+        style={{ width: '100%', height: 'auto' }}
       />
       {/* Hidden canvas element for capturing frames */}
-      <canvas ref={canvasRef} style={{ display: "none" }} />
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
       {isProcessing && <p>Processing...</p>}
     </div>
   );
