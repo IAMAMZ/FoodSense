@@ -1,16 +1,24 @@
-// CameraComponent.js
 "use client";
 import React, { useRef, useEffect, useState } from "react";
-import io from 'socket.io-client';  // Make sure to import socket.io-client
+import io from 'socket.io-client';  // Import socket.io-client
+import ImageFeedback from "./ImageFeedback";
 
 const CameraComponent = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
-  const socket = useRef(null);  // Added socket reference
-  const [isProcessing, setIsProcessing] = useState(false);
+  const socket = useRef(null);
 
-  // Function to detect if the device is mobile
+  // Corrected useState declaration with missing comma
+  const [nutritionData, setNutritionData] = useState({
+    status: "Scanning...",
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    weight: 0,
+  });
+
   const isMobileDevice = () => {
     return /Mobi|Android/i.test(navigator.userAgent);
   };
@@ -18,26 +26,44 @@ const CameraComponent = () => {
   useEffect(() => {
     console.log('Connecting to the server...');
     
-    // Force the use of WebSocket as the transport mechanism
-    socket.current = io('http://localhost:5000', {
-      transports: ['websocket'],  // Use WebSocket transport explicitly
+    socket.current = io("https://htnbackend.bhairawaryan.com", {
+      transports: ['websocket'],
     });
-
+  
     socket.current.on('connect', () => {
       console.log('Connected to WebSocket server');
     });
-
+  
+    // Listen for nutrition updates from the server
+    socket.current.on("update", (data) => {
+      console.log("Nutrition Update", data);
+  
+      // Update the state with the received nutrition data
+      const result = data.Result;
+      setNutritionData({
+        status: result?.name || "Unknown Food",
+        calories: result?.carbs || 0,  
+        protein: result?.proteins || 0,
+        carbs: result?.carbs || 0,
+        fat: result?.fats || 0,
+        weight: result?.['weight-reading'] || 0
+      });
+    });
+  
     socket.current.on('disconnect', (reason) => {
       console.log(`Disconnected from WebSocket server: ${reason}`);
     });
-
+  
     const startCamera = async () => {
       try {
-        // Request access to the camera
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const constraints = {
+          video: {
+            facingMode: isMobileDevice() ? { exact: "environment" } : "user",
+          },
+        };
+        const stream = await navigator.mediaDevices.getUserMedia({video: true});
         streamRef.current = stream;
-
-        // Set the video source to the stream
+  
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -46,17 +72,17 @@ const CameraComponent = () => {
       }
     };
     startCamera();
-
-    // Cleanup function to stop the camera when the component unmounts
+  
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
       if (socket.current) {
-        socket.current.disconnect();  // Disconnect socket on cleanup
+        socket.current.disconnect();
       }
     };
   }, []);
+  
 
   // Function to capture a frame from the video
   const captureFrame = () => {
@@ -70,16 +96,14 @@ const CameraComponent = () => {
 
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Get the image data URL
-      const imageDataURL = canvas.toDataURL('image/png');
-
-      // Now you can send 'imageDataURL' to your backend or process it in-browser
-      console.log('Captured frame:', imageDataURL);
-      // Example: processImage(imageDataURL);
+      const imageDataURL = canvas.toDataURL('image/jpeg');
+      const base64Image = imageDataURL.split(',')[1];  // Extract base64 data only
+      console.log('Sending frame to server');
+      
+      socket.current.emit('frame', base64Image);  // Send base64 string to the server
     }
   };
 
-  // Use an interval to capture frames periodically
   useEffect(() => {
     const interval = setInterval(() => {
       captureFrame();
@@ -96,9 +120,15 @@ const CameraComponent = () => {
         playsInline
         style={{ width: '100%', height: 'auto' }}
       />
-      {/* Hidden canvas element for capturing frames */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
-      {isProcessing && <p>Processing...</p>}
+      <ImageFeedback
+  status={nutritionData?.status || "Scanning..."}
+  calories={nutritionData?.calories || 0}
+  protein={nutritionData?.protein || 0}
+  carbs={nutritionData?.carbs || 0}
+  fat={nutritionData?.fat || 0}
+/>
+
     </div>
   );
 };
