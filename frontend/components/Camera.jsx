@@ -61,7 +61,7 @@ const CameraComponent = () => {
             facingMode: isMobileDevice() ? { exact: "environment" } : "user",
           },
         };
-        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         streamRef.current = stream;
   
         if (videoRef.current) {
