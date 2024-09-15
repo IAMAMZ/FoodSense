@@ -4,18 +4,60 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { MdCancelPresentation } from "react-icons/md";
 import Image from "next/image";
+import { Suspense, useEffect, useState } from "react";
+import baseurl from "@/baseurl";
 
 export default function Page() {
     const router = useRouter();
     const searchParams = useSearchParams();
-  
+
     // Get query parameters with fallback values
+    const name = searchParams.get("name") || "";
     const protein = searchParams.get('protein') || 0;
     const fat = searchParams.get('fat') || 0;
     const carbs = searchParams.get('carbs') || 0;
     const calories = searchParams.get('calories') || 0;
-  
+
+    // State to store the advice and ingredients from the server response
+    const [advice, setAdvice] = useState("");
+    const [ingredients, setIngredients] = useState([]);
+
+    // Effect to send POST request on component mount
+    useEffect(() => {
+        async function fetchAdviceAndIngredients() {
+            try {
+                const response = await fetch( baseurl+'/advice', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name,
+                        protein,
+                        fat,
+                        carbs,
+                        calories,
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(data)
+                    setAdvice(data.advice);
+                    setIngredients(data.ingredients);
+                } else {
+                    console.error("Failed to fetch advice and ingredients");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        fetchAdviceAndIngredients();
+    }, []);
+
     return (
+      <Suspense>
       <div className="flex flex-col justify-start items-center min-h-screen relative w-full">
         {/* Cancel Button */}
         <div className="absolute top-3 left-3 cursor-pointer" onClick={() => router.back()}>
@@ -58,25 +100,25 @@ export default function Page() {
         {/* Coaching Advice Section */}
         <div className="text-center mb-8">
           <h2 className="font-semibold mb-2">Coaching Advice</h2>
-          <p>
-            Advice ..
-            <br />
-            ..
-            <br />
-            ..
-            <br />
-            ..
-          </p>
+          <p>{advice ? advice : "Loading advice..."}</p>
         </div>
   
         {/* Ingredients Section */}
         <div className="text-center mb-8">
           <h2 className="font-semibold mb-2">Ingredients</h2>
-          <p>Milk, Salt, Sugar, Butter</p>
+          {ingredients.length > 0 ? (
+            <ul>
+              {ingredients.map((ingredient, index) => (
+                <li key={index}>{ingredient}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>Loading ingredients...</p>
+          )}
         </div>
   
         {/* Buttons */}
-        <div className="flex flex-col gap-10  w-full p-2">
+        <div className="flex flex-col gap-10 w-full p-2">
           <button className="bg-[#BBF246;] w-[60%] text-black text-lg py-2 px-4 rounded-full max-w-sm mx-auto">
             View Saved Meals
           </button>
@@ -87,5 +129,6 @@ export default function Page() {
           </button>
         </div>
       </div>
+      </Suspense>
     );
   }

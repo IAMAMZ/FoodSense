@@ -8,6 +8,7 @@ export default function ImageFeedback({ status, calories, protein, fat, carbs })
   function handleFinishScan() {
     // Construct the URL with query parameters
     const query = new URLSearchParams({
+      name:status.toString(),
       protein: protein.toString(),
       fat: fat.toString(),
       carbs: carbs.toString(),
@@ -19,7 +20,7 @@ export default function ImageFeedback({ status, calories, protein, fat, carbs })
   }
 
   return (
-    <div className="flex flex-col align-center justify-center rounded-lg bg-white p-4 shadow-lg absolute bottom-0 left-0 right-0 mx-4 mb-6 rounded-xl z-10">
+    <div className="flex flex-col align-center justify-center  bg-white p-4 shadow-lg absolute bottom-0 left-0 right-0 mx-4 mb-6 rounded-xl z-10">
       <div className="font-bold flex justify-center align-center text-xl mb-2">{status}</div>
       <div className="flex justify-center align-center mb-4 gap-3 text-sm">
         <div className="flex justify-center">{calories} Calories</div>
