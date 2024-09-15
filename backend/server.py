@@ -19,8 +19,14 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='asyncio')  # 'eve
 def home():
     return "Hello, World!"
 
+
+
+
+
+
+
 # Async function to analyze the frame using ChatGPT
-async def analyze_frame_with_chatgpt(base64_image)
+async def analyze_frame_with_chatgpt(base64_image):
     socketio.emit('update', "Processing frame")  # Just to test emit during async
     try:
         response = await openai.ChatCompletion.acreate(

@@ -4,9 +4,28 @@ const http = require('http');
 const axios = require('axios');
 const base64 = require('base64-js');
 const { OpenAI } = require('openai');
+const bodyParser = require('body-parser');
+
+
 
 // Initialize Express App
 const app = express();
+// fix cors issue
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    next();
+});
+// access control allow headers json
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+});
+
+
+// parse application/json
+app.use(bodyParser.json());
+
+
 const server = http.createServer(app);
 const io = new Server(server, {
     pingTimeout: 60000,  // 1 minute (default is 5000 ms)
@@ -14,11 +33,9 @@ const io = new Server(server, {
 });
 
 
-// Middleware to allow CORS for WebSocket connections
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    next();
-});
+// OpenAI API key
+const OPENAI_API_KEY = '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';
+
 
 // Simple Home Route
 app.get('/', (req, res) => {
@@ -77,7 +94,10 @@ async function analyzeFrameWithOpenAI(base64Image) {
 async function extractJsonFromResponse(response) {
     try {
         const message = response.choices[0].message.content;
-
+        // if message is a string then send string to client else json
+        // if (typeof message === 'string') {
+        //     return { message: message };
+        // console.log('Message:', response.choices[0]);
         // Try to extract the JSON structure from the response
         let match = message.match(/```json\s*(\{.*?\})\s*```/s);
         if (!match) {
@@ -102,7 +122,6 @@ async function extractJsonFromResponse(response) {
 
 // WebSocket connection event
 const clientIntervals = new Map();
-
 // WebSocket connection event
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
@@ -150,15 +169,94 @@ io.on('connection', (socket) => {
                 // Optionally, you can call your AI analysis function here
                 analyzeFrameWithOpenAI(oldFrame).then((result) => {
                     console.log('Result:', result);
-                    socket.emit('update', {'Result': result});
+                    socket.emit('update', { 'Result': result });
                 });
             }
-        }, 10000);  // Every second
+        }, 5000);  // Every second
 
         // Store the interval ID for this client
         clientIntervals.set(socket.id, intervalId);
     }
 });
+
+
+// make a get endpoint to get advice from gpt-4 model
+
+app.post('/advice', async (req, res) => {
+    text = req.body
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: `
+                            I need some advice on ${JSON.stringify(text)}. Can you provide me with some health advice based on the item I am about to consume.
+                            Also get me the list ingredients that is on my plate. Here is how I want the JSON to be structured:
+                            {
+                                "advice": (1 sentence max),
+                                "ingredients": (list) 
+                            }
+                            `
+                        },
+                    ],
+                },
+            ],
+            max_tokens: 300,
+        });
+
+        const result = await extractJsonFromResponse(response);
+        console.log('Response:', result);
+        res.json(result);
+    } catch (error) {
+        console.error('Error getting advice:', error.message);
+        res.json({ error: error.message });
+    }
+}
+);
+
+// make a post endpoint to get target macros from gpt-4 model
+app.post('/target-macros', async (req, res) => {
+    const input = req.body
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: `
+                            I need to know the target macros for ${JSON.stringify(input)}. Can you provide me with the target macros based on the item I am about to consume.
+                            Here is how I want the JSON to be structured:
+                            {
+                                "carbs": ,
+                                "proteins": ,
+                                "fats": ,
+                                "calories":
+                            }
+                            `
+                        },
+                    ],
+                },
+            ],
+            max_tokens: 300,
+        });
+
+        const result = await extractJsonFromResponse(response);
+        console.log('Response:', result);
+        res.json(result);
+    } catch (error) {
+        console.error('Error getting target macros:', error.message);
+        res.json({ error: error.message });
+    }
+}
+);
+
 
 // Start the server
 const PORT = 80;
