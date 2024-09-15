@@ -33,9 +33,6 @@ const io = new Server(server, {
 });
 
 
-// OpenAI API key
-const OPENAI_API_KEY = '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';
-
 
 // Simple Home Route
 app.get('/', (req, res) => {
